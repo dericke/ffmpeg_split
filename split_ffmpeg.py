@@ -33,11 +33,11 @@ def parseChapters(filename):
     print("title:")
     pprint.pprint(title)
 
-    if x == None:
+    if x is None:
       m1 = re.match(r".*Chapter #(\d+:\d+): start (\d+\.\d+), end (\d+\.\d+).*", line)
       title = None
     else:
-      title = x.group(1)
+      title = x[1]
 
     if m1 != None:
       chapter_match = m1
@@ -52,7 +52,11 @@ def parseChapters(filename):
       m = None
 
     if m != None:
-      chapters.append({ "name": str(num) + " - " + title, "start": m.group(2), "end": m.group(3)})
+      chapters.append({
+          "name": f"{str(num)} - {title}",
+          "start": m.group(2),
+          "end": m.group(3),
+      })
       num += 1
 
   return chapters
@@ -70,13 +74,15 @@ def getChapters():
   path, file = os.path.split(options.infile)
   newdir, fext = os.path.splitext( basename(options.infile) )
 
-  os.mkdir(path + "/" + newdir)
+  os.mkdir(f"{path}/{newdir}")
 
   for chap in chapters:
     chap['name'] = chap['name'].replace('/',':')
     chap['name'] = chap['name'].replace("'","\'")
     print("start:" +  chap['start'])
-    chap['outfile'] = path + "/" + newdir + "/" + re.sub("[^-a-zA-Z0-9_.():' ]+", '', chap['name']) + fext
+    chap['outfile'] = (f"{path}/{newdir}/" +
+                       re.sub("[^-a-zA-Z0-9_.():' ]+", '', chap['name']) +
+                       fext)
     chap['origfile'] = options.infile
     print(chap['outfile'])
   return chapters, options.encode
@@ -107,7 +113,9 @@ def convertChapters(chapters, encode):
       output = sp.check_output(command, stderr=sp.STDOUT, universal_newlines=True)
     except CalledProcessError as e:
       output = e.output
-      raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+      raise RuntimeError(
+          f"command '{e.cmd}' return with error (code {e.returncode}): {e.output}"
+      )
 
 if __name__ == '__main__':
   chapters, encode = getChapters()
